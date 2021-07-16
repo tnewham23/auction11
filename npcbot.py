@@ -29,6 +29,9 @@ class CompetitorInstance():
         self.mean = gameParameters["meanTrueValue"]
         self.minp = gameParameters["minimumBid"]
         self.ph2 = gameParameters["phase"] == "phase_2"
+        self.players = [0]*gameParameters["numPlayers"]
+
+        self.hasTrueValuels = []
 
 
     
@@ -36,20 +39,63 @@ class CompetitorInstance():
         # index is the current player's index, that usually stays put from game to game
         # trueValue is -1 if this bot doesn't know the true value 
         self.trueValue = trueValue
+        self.index = index
+        self.players[index] = -1
+        self.turn = 1
         pass
 
     def onBidMade(self, whoMadeBid, howMuch):
         # whoMadeBid is the index of the player that made the bid
         # howMuch is the amount that the bid was
+
+        if self.players[whoMadeBid] == -1:
+            return
+
+        if howMuch % 13 == 1 and (howMuch % 5 == 1 or howMuch % 17 == 1):
+            self.players[whoMadeBid] += 1
+            if howMuch % 17 == 1:
+                self.players[whoMadeBid] += 1
+                self.hasTrueValuels.append(whoMadeBid)
         pass
 
     def onMyTurn(self,lastBid):
         # lastBid is the last bid that was made
+        # On first turn establish who else is on team
+        if self.turn == 1 or (self.turn == 2 and self.trueValue == -1):
+            self.turn += 1
+            bidValue = lastBid + 8
+            # set bidvalue as remainder 1 modulo 13
+            dif = 14 - (bidValue % 13)
+            bidValue += dif
+            if self.trueValue == -1:
+                # Edge case where bidvalue would fit criteria for index with bid
+                while bidValue % 5 != 1 and bidValue % 17 == 1:
+                    bidValue += 13
+            else:
+                # set bidvalue as both remainder 13 and 23
+                while bidValue % 17 != 1:
+                    bidValue += 13
+            self.engine.makeBid(bidValue)
+            return
+        
+        if self.turn == 2 and self.trueValue > 0:
+            # give value as difference from mean
+            self.turn += 1
+        
         pr=32/50
         if lastBid>self.mean/4:
             pr=16/100
+        if lastBid>self.mean/2:
+            pr=8/100
         if lastBid>self.mean*3/4:
             pr=2/50
+        # Knows true value
+        if self.trueValue > 0:
+            # Bidding 50 won't cause the bidder to lost money
+            knowledgePenalty = self.gameParameters["knowledgePenalty"]
+            if lastBid + knowledgePenalty < self.trueValue:
+                self.engine.makeBid(11+(knowledgePenalty-8)*self.engine.random.random())
+            return
         if self.engine.random.random() < pr:
             if not self.ph2:
                 self.engine.makeBid(self.engine.math.floor(
@@ -64,4 +110,12 @@ class CompetitorInstance():
 
     def onAuctionEnd(self):
         # Now is the time to report team members, or do any cleanup.
-        pass
+        ownTeamList = []
+        for index, value in enumerate(self.players):
+            if index == self.index:
+                continue
+            if value > 1:
+                ownTeamList.append(index)
+
+        self.engine.reportTeams(ownTeamList, [], self.hasTrueValuels)
+        return
