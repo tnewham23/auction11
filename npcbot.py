@@ -87,7 +87,7 @@ class CompetitorInstance():
         
         if not self.ph2:
             # Bid made is greater than what npc bot would make
-            if self.prevBid and howMuch > (self.prevBid + self.minp + 2) and howMuch % 13 != 1:
+            if self.prevBid and howMuch > (self.prevBid + self.minp + 2):
                 if whoMadeBid not in self.nonNPC and whoMadeBid not in self.ownTeam:
                     self.nonNPC.append(whoMadeBid)
         
@@ -150,6 +150,10 @@ class CompetitorInstance():
 
     def onAuctionEnd(self):
         # Now is the time to report team members, or do any cleanup.
+        if self.game == 1:
+            for player in self.ownTeam:
+                if player in self.nonNPC:
+                    self.nonNPC.remove(player)
         self.engine.reportTeams(self.ownTeam, self.nonNPC, self.hasTrueValuels)
         return
 
