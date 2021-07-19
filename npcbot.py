@@ -48,29 +48,42 @@ class CompetitorInstance():
         self.turn = 0
         self.game += 1
         self.shouldBid = True
+        self.prevBid = 0
+        self.nonNPC = []
         pass
 
     def onBidMade(self, whoMadeBid, howMuch):
         # whoMadeBid is the index of the player that made the bid
         # howMuch is the amount that the bid was
 
+        # person who made bid is the bot itself
         if self.players[whoMadeBid] == -1:
             return
 
+        if not self.ph2:
+            # Bid made is greater than what npc bot would make
+            if self.prevBid and howMuch > (self.prevBid + self.minp + 2):
+                if whoMadeBid not in self.nonNPC:
+                    self.nonNPC.append(whoMadeBid)
+
+        # In first two turns of auction recieve signals from non bots saying they're on same team
         if howMuch % 13 == 1 and self.turn < 3 and self.game == 1: # and (howMuch % 5 == 1 or howMuch % 17 == 1):
             self.players[whoMadeBid] += 1
             if self.players[whoMadeBid] == 2:
                 self.ownTeam.append(whoMadeBid)
 
+        # First turn each auction recieve signal from bot with true value (if they have it)
         if howMuch % 17 == 1 and howMuch % 13 == 1 and self.turn < 2:
             self.players[whoMadeBid] += 1
             if self.players[whoMadeBid] == 2:
                 self.ownTeam.append(whoMadeBid)
             self.hasTrueValuels.append(whoMadeBid)
         
+        # Receive true value from plauer with true value
         if self.turn < 3 and self.hasTrueValuels and whoMadeBid == self.hasTrueValuels[0]:
             self.sharedTrueValue = howMuch + (self.mean - self.stddev)
             if len(self.ownTeam) > 1:
+                # Only continue bidding with bot that has largest index and wasn't given the true value
                 if self.ownTeam[0] == whoMadeBid:
                     if self.ownTeam[1] < self.index:
                         self.shouldBid = False
@@ -120,7 +133,7 @@ class CompetitorInstance():
             # Bidding 50 won't cause the bidder to lost money
             knowledgePenalty = self.gameParameters["knowledgePenalty"]
             if lastBid + knowledgePenalty - self.minp < self.sharedTrueValue:
-                self.engine.makeBid(self.minp(1+2*self.engine.random.random()))
+                self.engine.makeBid(self.minp(1+int(2*self.engine.random.random()) ) )
             return
         if self.engine.random.random() < pr:
             if not self.ph2:
@@ -136,7 +149,7 @@ class CompetitorInstance():
 
     def onAuctionEnd(self):
         # Now is the time to report team members, or do any cleanup.
-        self.engine.reportTeams(self.ownTeam, [], self.hasTrueValuels)
+        self.engine.reportTeams(self.ownTeam, self.nonNPC, self.hasTrueValuels)
         return
 
 if __name__ == "__main__":
