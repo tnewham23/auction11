@@ -60,12 +60,6 @@ class CompetitorInstance():
         if self.players[whoMadeBid] == -1:
             return
 
-        if not self.ph2:
-            # Bid made is greater than what npc bot would make
-            if self.prevBid and howMuch > (self.prevBid + self.minp + 2):
-                if whoMadeBid not in self.nonNPC:
-                    self.nonNPC.append(whoMadeBid)
-
         # In first two turns of auction recieve signals from non bots saying they're on same team
         if howMuch % 13 == 1 and self.turn < 3 and self.game == 1: # and (howMuch % 5 == 1 or howMuch % 17 == 1):
             self.players[whoMadeBid] += 1
@@ -90,6 +84,13 @@ class CompetitorInstance():
                 else:
                     if self.ownTeam[0] < self.index:
                         self.shouldBid = False
+        
+        if not self.ph2:
+            # Bid made is greater than what npc bot would make
+            if self.prevBid and howMuch > (self.prevBid + self.minp + 2) and howMuch % 13 != 1:
+                if whoMadeBid not in self.nonNPC and whoMadeBid not in self.ownTeam:
+                    self.nonNPC.append(whoMadeBid)
+        
     
 
     def onMyTurn(self,lastBid):
