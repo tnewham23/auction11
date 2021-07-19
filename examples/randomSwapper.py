@@ -6,6 +6,7 @@ class CompetitorInstance():
     def onGameStart(self, engine, gameParameters):
         self.engine=engine
         self.gameParameters=gameParameters
+        self.engine.print(str(gameParameters))
     
     def onAuctionStart(self, index, trueValue):
         pass
@@ -21,5 +22,6 @@ class CompetitorInstance():
     def onAuctionEnd(self):
         playerList = list(range(0,self.gameParameters["numPlayers"]))
         reportOwnTeam = random.sample(playerList,5)
+        self.engine.swapTo(self.engine.random.randint(0,self.gameParameters["numPlayers"]))
         self.engine.reportTeams(reportOwnTeam, [], [])
         pass
