@@ -74,7 +74,7 @@ class CompetitorInstance():
             self.hasTrueValuels.append(whoMadeBid)
         
         # Receive true value from plauer with true value
-        if self.turn < 3 and self.hasTrueValuels and whoMadeBid == self.hasTrueValuels[0]:
+        if self.turn < 4 and self.hasTrueValuels and whoMadeBid == self.hasTrueValuels[0]:
             self.sharedTrueValue = howMuch + (self.mean - self.stddev)
             if len(self.ownTeam) > 1:
                 # Only continue bidding with bot that has largest index and wasn't given the true value
@@ -87,7 +87,7 @@ class CompetitorInstance():
         
         if not self.ph2:
             # Bid made is greater than what npc bot would make
-            if self.prevBid and howMuch > (self.prevBid + self.minp + 2):
+            if self.prevBid and howMuch > (self.prevBid + self.minp*3):
                 if whoMadeBid not in self.nonNPC and whoMadeBid not in self.ownTeam:
                     self.nonNPC.append(whoMadeBid)
         
@@ -124,22 +124,25 @@ class CompetitorInstance():
             self.shouldBid = False
             return
         
+        if self.turn < 4 or self.sharedTrueValue > lastBid + self.minp*2:
+            if not self.ph2:
+                self.engine.makeBid(self.engine.math.floor(lastBid+(self.minp*(1+2*self.engine.random.random()))))
+                return
+
         pr=32/50
         if lastBid>self.mean/4:
             pr=16/100
         if lastBid>self.mean*3/4:
             pr=2/50
         # Knows true value
-        if self.sharedTrueValue > 0 and self.trueValue < 0:
+        if self.sharedTrueValue > 0:
             # Bidding 50 won't cause the bidder to lost money
-            knowledgePenalty = self.gameParameters["knowledgePenalty"]
-            if lastBid + knowledgePenalty - self.minp < self.sharedTrueValue:
-                self.engine.makeBid(self.minp(1+int(2*self.engine.random.random()) ) )
+            if lastBid + self.minp < self.sharedTrueValue or lastBid < self.mean - self.stddev:
+                self.engine.makeBid(self.engine.math.floor(lastBid+(self.minp*(1+2*self.engine.random.random()))))
             return
         if self.engine.random.random() < pr:
             if not self.ph2:
-                self.engine.makeBid(self.engine.math.floor(
-                    lastBid+(self.minp*(1+2*self.engine.random.random()))))
+                self.engine.makeBid(self.engine.math.floor(lastBid+(self.minp*(1+2*self.engine.random.random()))))
             else:
                 self.engine.makeBid(lastBid + int((1+7 * self.linterp(self.NPCnormalY2,self.NPCnormalX, self.engine.random.random())) * self.minp))
         return
