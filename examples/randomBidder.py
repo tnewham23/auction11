@@ -1,11 +1,12 @@
 import random
 class CompetitorInstance():
     def __init__(self):
+        # initialize personal variables
         pass
     
     def onGameStart(self, engine, gameParameters):
+        # engine: an instance of the game engine with functions as outlined in the documentation.
         self.engine=engine
-        self.gameParameters=gameParameters
     
     def onAuctionStart(self, index, trueValue):
         pass
@@ -15,11 +16,8 @@ class CompetitorInstance():
 
     def onMyTurn(self,lastBid):
         if self.engine.random.randint(0,100)<20:
-            self.engine.makeBid(lastBid+1)
+            self.engine.makeBid(lastBid+11)
         pass
 
     def onAuctionEnd(self):
-        playerList = list(range(0,self.gameParameters["numPlayers"]))
-        reportOwnTeam = random.sample(playerList,5)
-        self.engine.reportTeams(reportOwnTeam, [], [])
         pass

@@ -1,6 +1,7 @@
 class CompetitorInstance():
     def __init__(self):
         # initialize personal variables
+        # line i added to see if git is working
         pass
     
     def onGameStart(self, engine, gameParameters):
